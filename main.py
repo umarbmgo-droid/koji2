@@ -111,7 +111,7 @@ async def load_cogs():
         except Exception as e:
             print(f"❌ Failed to load cog {cog}.py: {e}")
 
-# ===== BASIC COMMANDS (Only essential - NO HELP COMMAND) =====
+# ===== BASIC COMMANDS =====
 @bot.command(name="test")
 async def test_command(ctx):
     """Test if bot is working"""
@@ -169,21 +169,20 @@ async def on_message(message):
         if str(mention.id) in data['afk']:
             await message.channel.send(f"{mention.name} is AFK: {data['afk'][str(mention.id)]}")
     
-    # Snipe
+    # Snipe - store multiple messages
     if message.content:
-      # Snipe (store multiple)
-    channel_id = message.channel.id
-    if channel_id not in data['snipe']:
-        data['snipe'][channel_id] = []
-    
-    data['snipe'][channel_id].insert(0, {
-        'content': message.content,
-        'author': message.author.name,
-        'timestamp': datetime.now().isoformat()
-    })
-    # Keep only last 10 messages
-    data['snipe'][channel_id] = data['snipe'][channel_id][:10]
-    save_data()
+        channel_id = message.channel.id
+        if channel_id not in data['snipe']:
+            data['snipe'][channel_id] = []
+        
+        data['snipe'][channel_id].insert(0, {
+            'content': message.content,
+            'author': message.author.name,
+            'timestamp': datetime.now().isoformat()
+        })
+        # Keep only last 10 messages
+        data['snipe'][channel_id] = data['snipe'][channel_id][:10]
+        save_data()
     
     # Auto-react
     if str(message.author.id) in data['auto_react']:
