@@ -63,7 +63,6 @@ load_data()
 
 # ===== BOT SETUP =====
 intents = discord.Intents.all()
-# FIXED: Added "." as command prefix
 bot = commands.Bot(command_prefix=".", intents=intents, help_command=None)
 
 # Store bot functions for cogs
@@ -74,6 +73,8 @@ bot.get_uptime = lambda: get_uptime()
 bot.is_whitelisted = lambda uid: uid in data['whitelist'] or uid == OWNER_ID
 bot.get_prefix_custom = lambda guild: data['custom_prefix'].get(str(guild.id), ".") if guild else "."
 bot.support_server = SUPPORT_SERVER
+bot.bot_name = BOT_NAME
+bot.banner_url = BOT_BANNER_URL
 
 # ===== HELPER FUNCTIONS =====
 def get_uptime():
@@ -110,7 +111,7 @@ async def load_cogs():
         except Exception as e:
             print(f"❌ Failed to load cog {cog}.py: {e}")
 
-# ===== BASIC COMMANDS =====
+# ===== BASIC COMMANDS (Only essential ones) =====
 @bot.command(name="test")
 async def test_command(ctx):
     """Test if bot is working"""
@@ -118,18 +119,8 @@ async def test_command(ctx):
 
 @bot.command(name="ping")
 async def ping(ctx):
+    """Check bot latency"""
     embed = discord.Embed(description=f"Pong! `{round(bot.latency * 1000)}ms`", color=0xdc143c)
-    await ctx.send(embed=embed)
-
-@bot.command(name="help")
-async def help_cmd(ctx):
-    prefix = "."
-    embed = discord.Embed(
-        title=f"{BOT_NAME} help",
-        description="Type `.test` to test if bot is working.",
-        color=0xdc143c
-    )
-    embed.add_field(name="Commands", value=f"`.ping` - Check latency\n`.test` - Test bot\n`.help` - This menu", inline=False)
     await ctx.send(embed=embed)
 
 # ===== SLASH COMMANDS =====
@@ -168,7 +159,33 @@ async def on_message(message):
     if message.author.bot:
         return
     
-    # Process commands (bot already has prefix=".")
+    # AFK system
+    if str(message.author.id) in data['afk']:
+        del data['afk'][str(message.author.id)]
+        save_data()
+        await message.channel.send(f"Welcome back {message.author.mention}!")
+    
+    for mention in message.mentions:
+        if str(mention.id) in data['afk']:
+            await message.channel.send(f"{mention.name} is AFK: {data['afk'][str(mention.id)]}")
+    
+    # Snipe
+    if message.content:
+        data['snipe'][message.channel.id] = {
+            'content': message.content,
+            'author': message.author.name,
+            'timestamp': datetime.now().isoformat()
+        }
+        save_data()
+    
+    # Auto-react
+    if str(message.author.id) in data['auto_react']:
+        for emoji in data['auto_react'][str(message.author.id)]:
+            try:
+                await message.add_reaction(emoji)
+            except:
+                pass
+    
     await bot.process_commands(message)
 
 # ===== ON_READY =====
