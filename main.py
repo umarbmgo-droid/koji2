@@ -111,7 +111,7 @@ async def load_cogs():
         except Exception as e:
             print(f"❌ Failed to load cog {cog}.py: {e}")
 
-# ===== BASIC COMMANDS (Only essential ones) =====
+# ===== BASIC COMMANDS (Only essential - NO HELP COMMAND) =====
 @bot.command(name="test")
 async def test_command(ctx):
     """Test if bot is working"""
