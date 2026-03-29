@@ -110,33 +110,27 @@ async def load_cogs():
         except Exception as e:
             print(f"❌ Failed to load cog {cog}.py: {e}")
 
-# ===== PREFIX COMMANDS (Built-in) =====
+# ===== TEST COMMAND =====
+@bot.command(name="test")
+async def test_command(ctx):
+    """Test if bot is working"""
+    await ctx.send("Test command works! The bot is receiving messages!")
+
 @bot.command(name="ping")
 async def ping(ctx):
     embed = discord.Embed(description=f"Pong! `{round(bot.latency * 1000)}ms`", color=0xdc143c)
     await ctx.send(embed=embed)
 
 @bot.command(name="help")
-async def help_command(ctx):
-    prefix = bot.get_prefix_custom(ctx.guild)
+async def help_cmd(ctx):
+    prefix = "."
     embed = discord.Embed(
         title=f"{BOT_NAME} help",
-        description="Use the dropdown menu below to see commands.",
+        description="Type `.test` to test if bot is working.",
         color=0xdc143c
     )
-    embed.set_image(url=BOT_BANNER_URL)
-    embed.add_field(name="How to use", value=f"Use `{prefix}help <command>` to see more command info.", inline=False)
-    embed.add_field(name="Need support?", value=f"Join the [support server]({SUPPORT_SERVER}) if you're stuck.", inline=False)
-    embed.add_field(name="Additional info", value="Anything in `<>` is required, `[]` is optional.", inline=False)
-    embed.set_footer(text=f"{len(bot.commands)} commands • 10 modules")
-    
-    # Simple view without dropdown for now
-    class SimpleView(discord.ui.View):
-        def __init__(self):
-            super().__init__(timeout=60)
-            self.add_item(discord.ui.Button(label="Support Server", url=f"https://{SUPPORT_SERVER}"))
-    
-    await ctx.send(embed=embed, view=SimpleView())
+    embed.add_field(name="Test", value=f"`{prefix}test` - Test bot", inline=False)
+    await ctx.send(embed=embed)
 
 # ===== SLASH COMMANDS =====
 @bot.tree.command(name="ping", description="Check bot latency")
@@ -168,23 +162,22 @@ async def whitelist_user(interaction: discord.Interaction, user: discord.Member)
         embed = discord.Embed(description=f"❌ {user.mention} is already whitelisted", color=0xdc143c)
     await interaction.response.send_message(embed=embed)
 
-# ===== THE CRITICAL FIX: ON_MESSAGE =====
+# ===== ON_MESSAGE =====
 @bot.event
 async def on_message(message):
-    # Don't process bot messages
     if message.author.bot:
         return
     
-    # Get the prefix for this server
-    prefix = "."
+    # Debug print to Railway logs
+    print(f"📨 Message: {message.content} from {message.author.name}")
     
-    # Check if message starts with prefix
-    if message.content.startswith(prefix):
-        # Remove prefix and process command
-        message.content = message.content[len(prefix):]
+    # Check for . prefix
+    if message.content.startswith("."):
+        print(f"🔍 Processing command: {message.content}")
+        message.content = message.content[1:]
         await bot.process_commands(message)
 
-# ===== EVENTS =====
+# ===== ON_READY =====
 @bot.event
 async def on_ready():
     print("="*50)
@@ -197,9 +190,9 @@ async def on_ready():
         avatar_data = await download_image(BOT_PFP_URL)
         if avatar_data:
             await bot.user.edit(avatar=avatar_data)
-            print(f"🖼️ Avatar set successfully")
+            print(f"🖼️ Avatar set")
     except Exception as e:
-        print(f"❌ Error setting avatar: {e}")
+        print(f"Avatar error: {e}")
     
     # Set streaming status
     await bot.change_presence(activity=discord.Streaming(
@@ -217,7 +210,7 @@ async def on_ready():
     except Exception as e:
         print(f"Failed to sync: {e}")
     
-    print(f"📝 Total prefix commands loaded: {len(bot.commands)}")
+    print(f"📝 Total prefix commands: {len(bot.commands)}")
     print("="*50)
 
 # ===== RUN BOT =====
