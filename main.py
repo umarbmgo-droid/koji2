@@ -172,7 +172,6 @@ async def on_message(message):
     # Snipe
     if message.content:
       # Snipe (store multiple)
-if message.content:
     channel_id = message.channel.id
     if channel_id not in data['snipe']:
         data['snipe'][channel_id] = []
