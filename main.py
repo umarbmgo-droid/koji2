@@ -16,7 +16,6 @@ SUPPORT_SERVER = "discord.gg/ekittens"
 BOT_NAME = "koji"
 BOT_PFP_URL = "https://i.pinimg.com/1200x/5b/4e/28/5b4e2808b89937b39b63a89d759119bd.jpg"
 BOT_BANNER_URL = "https://i.pinimg.com/originals/7f/eb/24/7feb24f573c4950b5fde5b883c731b1c.gif"
-PREFIX_DEFAULT = "."
 
 # ===== GLOBAL DATA =====
 data = {
@@ -64,7 +63,8 @@ load_data()
 
 # ===== BOT SETUP =====
 intents = discord.Intents.all()
-bot = commands.Bot(command_prefix=None, intents=intents, help_command=None)
+# FIXED: Added "." as command prefix
+bot = commands.Bot(command_prefix=".", intents=intents, help_command=None)
 
 # Store bot functions for cogs
 bot.data = data
@@ -72,7 +72,7 @@ bot.save_data = save_data
 bot.owner_id = OWNER_ID
 bot.get_uptime = lambda: get_uptime()
 bot.is_whitelisted = lambda uid: uid in data['whitelist'] or uid == OWNER_ID
-bot.get_prefix_custom = lambda guild: data['custom_prefix'].get(str(guild.id), PREFIX_DEFAULT) if guild else PREFIX_DEFAULT
+bot.get_prefix_custom = lambda guild: data['custom_prefix'].get(str(guild.id), ".") if guild else "."
 bot.support_server = SUPPORT_SERVER
 
 # ===== HELPER FUNCTIONS =====
@@ -110,7 +110,7 @@ async def load_cogs():
         except Exception as e:
             print(f"❌ Failed to load cog {cog}.py: {e}")
 
-# ===== TEST COMMAND =====
+# ===== BASIC COMMANDS =====
 @bot.command(name="test")
 async def test_command(ctx):
     """Test if bot is working"""
@@ -129,7 +129,7 @@ async def help_cmd(ctx):
         description="Type `.test` to test if bot is working.",
         color=0xdc143c
     )
-    embed.add_field(name="Test", value=f"`{prefix}test` - Test bot", inline=False)
+    embed.add_field(name="Commands", value=f"`.ping` - Check latency\n`.test` - Test bot\n`.help` - This menu", inline=False)
     await ctx.send(embed=embed)
 
 # ===== SLASH COMMANDS =====
@@ -168,14 +168,8 @@ async def on_message(message):
     if message.author.bot:
         return
     
-    # Debug print to Railway logs
-    print(f"📨 Message: {message.content} from {message.author.name}")
-    
-    # Check for . prefix
-    if message.content.startswith("."):
-        print(f"🔍 Processing command: {message.content}")
-        message.content = message.content[1:]
-        await bot.process_commands(message)
+    # Process commands (bot already has prefix=".")
+    await bot.process_commands(message)
 
 # ===== ON_READY =====
 @bot.event
