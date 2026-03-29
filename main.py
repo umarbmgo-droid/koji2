@@ -171,12 +171,20 @@ async def on_message(message):
     
     # Snipe
     if message.content:
-        data['snipe'][message.channel.id] = {
-            'content': message.content,
-            'author': message.author.name,
-            'timestamp': datetime.now().isoformat()
-        }
-        save_data()
+      # Snipe (store multiple)
+if message.content:
+    channel_id = message.channel.id
+    if channel_id not in data['snipe']:
+        data['snipe'][channel_id] = []
+    
+    data['snipe'][channel_id].insert(0, {
+        'content': message.content,
+        'author': message.author.name,
+        'timestamp': datetime.now().isoformat()
+    })
+    # Keep only last 10 messages
+    data['snipe'][channel_id] = data['snipe'][channel_id][:10]
+    save_data()
     
     # Auto-react
     if str(message.author.id) in data['auto_react']:
